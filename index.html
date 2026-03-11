@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>銘柄一覧ダッシュボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#eeebe3;--surface:#ffffff;--surface2:#faf7f2;
+  --border:#ccc7bc;--text:#141210;--text-sub:#3d3830;
+  --text-mid:#6b6055;--text-mut:#9e9080;
+  --gold:#8a6420;--gold-l:#a87c2a;--gold-p:#f5edd8;
+  --blue:#1a6fa8;--blue-bg:#ddeef9;
+  --green:#166638;--green-bg:#c8f0d8;
+  --red:#a82020;--red-bg:#f8d8d8;
+  --orange:#c05818;--orng-bg:#fde8d0;
+  --purple:#6a2a8a;--purp-bg:#eeddf8;
+  --r:10px;--shadow:0 2px 10px rgba(0,0,0,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:16px;}
+body{
+  font-family:'Noto Sans JP',sans-serif;
+  font-weight:400;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  min-height:100vh;
+  -webkit-text-size-adjust:100%;
+}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:3px solid var(--gold);padding:20px 18px 16px;position:sticky;top:0;z-index:100;box-shadow:0 3px 16px rgba(0,0,0,0.13);}
+.hdr-lbl{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:5px;color:var(--gold);margin-bottom:3px;}
+.hdr-ttl{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:900;color:var(--text);margin-bottom:14px;}
+.hdr-ttl span{color:var(--gold-l);}
+
+/* STATS */
+.stats{display:flex;gap:6px;margin-bottom:12px;}
+.st{flex:1;background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;}
+.st:hover,.st.active{border-color:var(--gold);background:var(--gold-p);}
+.st-n{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:1;display:block;color:var(--text-mid);}
+.st-n.cw{color:var(--orange);}
+.st-n.cs{color:var(--blue);}
+.st-n.ch{color:var(--green);}
+.st-n.ce{color:var(--red);}
+.st-l{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-mut);}
+
+/* PHASE FILTER */
+.pf{display:flex;gap:6px;flex-wrap:wrap;}
+.pfb{font-size:13px;font-weight:700;padding:7px 13px;border-radius:6px;border:2px solid var(--border);background:var(--surface2);color:var(--text-mid);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.pfb:hover{border-color:var(--gold);color:var(--gold);}
+.pfb.on-all{background:var(--gold);color:#fff;border-color:var(--gold);}
+.pfb.on-watch{background:var(--orange);color:#fff;border-color:var(--orange);}
+.pfb.on-scout{background:var(--blue);color:#fff;border-color:var(--blue);}
+.pfb.on-hold{background:var(--green);color:#fff;border-color:var(--green);}
+.pfb.on-exit{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* SECTOR FILTER */
+.sf-wrap{padding:12px 18px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.sf-lbl{font-size:12px;font-weight:700;color:var(--text-mut);letter-spacing:2px;margin-right:4px;}
+.sfb{font-size:13px;font-weight:700;padding:6px 13px;border-radius:6px;border:2px solid var(--border);background:var(--surface);color:var(--text-mid);cursor:pointer;transition:all .15s;}
+.sfb:hover,.sfb.on{border-color:var(--gold-l);color:var(--gold);background:var(--gold-p);}
+
+/* MAIN */
+.main{padding:16px 18px 80px;}
+
+/* SECTOR GROUP */
+.sg{margin-bottom:24px;}
+.sg-hdr{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:2px solid var(--border);margin-bottom:12px;}
+.sg-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--gold);}
+.sg-cnt{font-size:12px;font-weight:700;color:var(--text-mut);background:var(--surface);border:1.5px solid var(--border);padding:2px 10px;border-radius:10px;}
+
+/* STOCK CARD */
+.sc{background:var(--surface);border:2px solid var(--border);border-radius:var(--r);margin-bottom:12px;box-shadow:var(--shadow);cursor:pointer;transition:all .18s;overflow:hidden;position:relative;}
+.sc:hover{box-shadow:0 5px 20px rgba(0,0,0,.13);border-color:var(--gold-l);transform:translateY(-1px);}
+.sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;}
+.sc.watch::before{background:var(--orange);}
+.sc.scout::before{background:var(--blue);}
+.sc.hold::before{background:var(--green);}
+.sc.exit::before{background:var(--red);}
+
+.sc-inner{padding:16px 16px 16px 24px;display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-items:start;}
+
+/* LEFT */
+.cl-code{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold-l);line-height:1;letter-spacing:2px;}
+.cl-exch{font-size:11px;color:var(--text-mut);font-weight:700;letter-spacing:1px;margin-top:3px;}
+.cl-phase{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 9px;border-radius:5px;margin-top:10px;white-space:nowrap;}
+.cp-watch{background:var(--orng-bg);color:var(--orange);}
+.cp-scout{background:var(--blue-bg);color:var(--blue);}
+.cp-hold{background:var(--green-bg);color:var(--green);}
+.cp-exit{background:var(--red-bg);color:var(--red);}
+
+/* MID */
+.cm-name{font-family:'Noto Serif JP',serif;font-size:20px;font-weight:900;color:var(--text);margin-bottom:7px;line-height:1.3;}
+.cm-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.tag-sec{font-size:12px;font-weight:700;padding:3px 10px;border-radius:5px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text-mid);}
+.tag-thm{font-size:12px;font-weight:700;padding:3px 10px;border-radius:5px;background:var(--purp-bg);color:var(--purple);}
+.cm-tlbl{font-size:11px;font-weight:700;color:var(--text-mut);letter-spacing:2px;margin-bottom:5px;}
+.cm-trigger{font-size:14px;font-weight:500;color:var(--text-sub);line-height:1.7;}
+
+/* RIGHT */
+.cr{display:flex;flex-direction:column;gap:10px;align-items:flex-end;min-width:90px;}
+.cr-nlbl{font-size:11px;font-weight:700;color:var(--text-mut);letter-spacing:1px;text-align:right;}
+.cr-ndate{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1.1;color:var(--text);text-align:right;}
+.cr-ndate.urgent{color:var(--red);}
+.cr-ndate.soon{color:var(--orange);}
+.cr-nev{font-size:11px;color:var(--text-mid);font-weight:700;text-align:right;}
+.cr-upd{font-size:11px;color:var(--text-mut);text-align:right;}
+.cr-links{display:flex;flex-direction:column;gap:6px;}
+.lbtn{font-size:12px;font-weight:700;letter-spacing:1px;padding:7px 12px;border-radius:6px;text-decoration:none;border:2px solid;text-align:center;transition:all .15s;display:block;white-space:nowrap;}
+.lbtn.s1{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+.lbtn.s1:hover{background:var(--blue);color:#fff;}
+.lbtn.s2{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+.lbtn.s2:hover{background:var(--green);color:#fff;}
+.lbtn.pend{background:var(--surface2);color:var(--text-mut);border-color:var(--border);cursor:default;font-size:11px;}
+
+/* DETAIL */
+.dp{display:none;border-top:2px dashed var(--border);background:var(--gold-p);padding:16px 16px 16px 24px;animation:sd .2s ease;}
+.dp.open{display:block;}
+@keyframes sd{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.dp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.dp-grid{grid-template-columns:1fr;}}
+.dp-lbl{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2px;margin-bottom:6px;}
+.dp-txt{font-size:14px;font-weight:500;color:var(--text-sub);line-height:1.75;}
+
+/* EMPTY / ADD */
+.empty{text-align:center;padding:48px 16px;color:var(--text-mut);}
+.add-hint{border:2px dashed var(--border);border-radius:var(--r);padding:16px;text-align:center;color:var(--text-mut);font-size:13px;font-weight:500;margin-top:4px;background:rgba(255,255,255,0.5);}
+.add-hint code{font-size:12px;background:var(--bg);padding:2px 6px;border-radius:3px;}
+
+footer{text-align:center;padding:20px 16px;font-size:12px;color:var(--text-mut);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-lbl">WATCHLIST DASHBOARD</div>
+  <div class="hdr-ttl">銘柄一覧 / <span>タラレバ管理</span></div>
+  <div class="stats">
+    <div class="st active" onclick="fP('all',this)"><span class="st-n" id="ca">0</span><span class="st-l">TOTAL</span></div>
+    <div class="st" onclick="fP('watch',this)"><span class="st-n cw" id="cw">0</span><span class="st-l">観察中</span></div>
+    <div class="st" onclick="fP('scout',this)"><span class="st-n cs" id="cs">0</span><span class="st-l">打診検討</span></div>
+    <div class="st" onclick="fP('hold',this)"><span class="st-n ch" id="ch">0</span><span class="st-l">保有中</span></div>
+    <div class="st" onclick="fP('exit',this)"><span class="st-n ce" id="ce">0</span><span class="st-l">撤退待ち</span></div>
+  </div>
+  <div class="pf" id="pf">
+    <button class="pfb on-all" onclick="fP('all',this)">すべて</button>
+    <button class="pfb" onclick="fP('watch',this)">👁 観察中</button>
+    <button class="pfb" onclick="fP('scout',this)">🎯 打診検討</button>
+    <button class="pfb" onclick="fP('hold',this)">✅ 保有中</button>
+    <button class="pfb" onclick="fP('exit',this)">⚠️ 撤退待ち</button>
+  </div>
+</div>
+
+<div class="sf-wrap" id="sf"><span class="sf-lbl">SECTOR</span></div>
+<div class="main" id="main"></div>
+<footer>銘柄一覧ダッシュボード — 個人メモ用。投資助言ではありません。</footer>
+
+<script>
+const STOCKS = [
+  {
+    code:"6966", name:"三井ハイテック", exchange:"東証プライム",
+    sector:"精密・電子部品", theme:"🔴 モーターコア（EV駆動）",
+    phase:"watch",
+    trigger:"EV政策再加速 or 日本OEMのBEV量産前倒し発表で、世界トップシェアのモーターコア需要が本格拡大するタイミングを狙う。28/1期ボトム確認待ち。",
+    nextCheck:"2026-06-14", nextEvent:"27/1期 1Q決算", updated:"2026-03-11",
+    thesis:"EV普及は不可逆。26/1期→28/1期にボトムが後ずれしたが構造的根拠は生きている。先行投資フェーズ終了後に収益が急回復する設計。",
+    keyKpi:"電機部品 四半期利益率 5%台維持が最低ライン。4%台突入でテーゼ再検討。",
+    entryNote:"打診：27/1期1Q確認後（2026/6〜）。本仕込み：28/1期ボトム数値確認後（2027/3〜）。",
+    sheet1:"", sheet2:"",
+  },
+  // ─── 銘柄追加例（コメントアウト） ───
+  // { code:"0000", name:"銘柄名", exchange:"東証プライム", sector:"鉄鋼・金属",
+  //   theme:"テーマ", phase:"watch", trigger:"トリガー説明",
+  //   nextCheck:"2026-09-01", nextEvent:"決算名", updated:"2026-03-11",
+  //   thesis:"テーゼ", keyKpi:"KPI", entryNote:"仕込みメモ", sheet1:"", sheet2:"" },
+];
+
+let cP='all', cS='all';
+
+function render(){
+  document.getElementById('ca').textContent=STOCKS.length;
+  document.getElementById('cw').textContent=STOCKS.filter(s=>s.phase==='watch').length;
+  document.getElementById('cs').textContent=STOCKS.filter(s=>s.phase==='scout').length;
+  document.getElementById('ch').textContent=STOCKS.filter(s=>s.phase==='hold').length;
+  document.getElementById('ce').textContent=STOCKS.filter(s=>s.phase==='exit').length;
+
+  const list=STOCKS.filter(s=>(cP==='all'||s.phase===cP)&&(cS==='all'||s.sector===cS));
+  const main=document.getElementById('main');
+  if(!list.length){
+    main.innerHTML='<div class="empty"><p style="font-size:36px;margin-bottom:8px">🔍</p><p>該当する銘柄がありません</p></div>';
+    return;
+  }
+
+  const grp={};
+  list.forEach(s=>{if(!grp[s.sector])grp[s.sector]=[];grp[s.sector].push(s);});
+
+  let h='';
+  for(const[sec,stocks]of Object.entries(grp)){
+    h+=`<div class="sg">
+      <div class="sg-hdr">
+        <span class="sg-name">${sec}</span>
+        <span class="sg-cnt">${stocks.length}銘柄</span>
+      </div>`;
+
+    stocks.forEach(s=>{
+      const pl={watch:'👁 観察中',scout:'🎯 打診検討',hold:'✅ 保有中',exit:'⚠️ 撤退待ち'}[s.phase];
+      const today=new Date(), next=new Date(s.nextCheck);
+      const diff=Math.ceil((next-today)/86400000);
+      const dc=diff<14?'urgent':diff<45?'soon':'';
+      const nd=s.nextCheck.slice(0,7).replace('-','/');
+      const s1=s.sheet1
+        ?`<a class="lbtn s1" href="${s.sheet1}" target="_blank">📊 分析</a>`
+        :`<span class="lbtn pend">分析 S1</span>`;
+      const s2=s.sheet2
+        ?`<a class="lbtn s2" href="${s.sheet2}" target="_blank">📋 監視</a>`
+        :`<span class="lbtn pend">監視 S2</span>`;
+
+      h+=`
+      <div class="sc ${s.phase}" onclick="td('${s.code}')">
+        <div class="sc-inner">
+          <div>
+            <div class="cl-code">${s.code}</div>
+            <div class="cl-exch">${s.exchange}</div>
+            <div class="cl-phase cp-${s.phase}">${pl}</div>
+          </div>
+          <div>
+            <div class="cm-name">${s.name}</div>
+            <div class="cm-tags">
+              <span class="tag-sec">${s.sector}</span>
+              <span class="tag-thm">${s.theme}</span>
+            </div>
+            <div class="cm-tlbl">TRIGGER</div>
+            <div class="cm-trigger">${s.trigger}</div>
+          </div>
+          <div class="cr">
+            <div>
+              <div class="cr-nlbl">NEXT CHECK</div>
+              <div class="cr-ndate ${dc}">${nd}</div>
+              <div class="cr-nev">${s.nextEvent}</div>
+            </div>
+            <div class="cr-upd">更新 ${s.updated}</div>
+            <div class="cr-links">${s1}${s2}</div>
+          </div>
+        </div>
+        <div class="dp" id="dp-${s.code}">
+          <div class="dp-grid">
+            <div>
+              <div class="dp-lbl">CORE THESIS</div>
+              <div class="dp-txt">${s.thesis}</div>
+            </div>
+            <div>
+              <div class="dp-lbl">KEY KPI</div>
+              <div class="dp-txt">${s.keyKpi}</div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div class="dp-lbl">ENTRY NOTE</div>
+              <div class="dp-txt">${s.entryNote}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  h+=`<div class="add-hint">＋ 銘柄追加は <code>STOCKS</code> 配列に追記。リンクはGoogleドライブUP後に <code>sheet1/sheet2</code> へ入力。</div>`;
+  main.innerHTML=h;
+}
+
+function td(code){
+  const dp=document.getElementById(`dp-${code}`);
+  if(!dp)return;
+  document.querySelectorAll('.dp.open').forEach(e=>{if(e!==dp)e.classList.remove('open');});
+  dp.classList.toggle('open');
+}
+
+function fP(phase,el){
+  cP=phase;
+  document.querySelectorAll('.stats .st').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('#pf .pfb').forEach(e=>{e.className='pfb';});
+  if(el.classList.contains('st'))el.classList.add('active');
+  if(el.classList.contains('pfb'))el.classList.add(`on-${phase}`);
+  render();
+}
+
+function buildSF(){
+  const wrap=document.getElementById('sf');
+  const lbl=wrap.querySelector('.sf-lbl');
+  wrap.innerHTML='';
+  wrap.appendChild(lbl);
+  const all=document.createElement('button');
+  all.className='sfb on'; all.textContent='すべて';
+  all.onclick=()=>{cS='all';document.querySelectorAll('.sfb').forEach(b=>b.classList.remove('on'));all.classList.add('on');render();};
+  wrap.appendChild(all);
+  [...new Set(STOCKS.map(s=>s.sector))].forEach(sec=>{
+    const b=document.createElement('button');
+    b.className='sfb'; b.textContent=sec;
+    b.onclick=()=>{cS=sec;document.querySelectorAll('.sfb').forEach(x=>x.classList.remove('on'));b.classList.add('on');render();};
+    wrap.appendChild(b);
+  });
+}
+
+buildSF();
+render();
+</script>
+</body>
+</html>
